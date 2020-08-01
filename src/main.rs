@@ -5,10 +5,58 @@ use ansi_term::Style;
 use std::fs::File;
 use std::io::prelude::*;
 
+enum CellPart {
+    Top,
+    Middle,
+    Bottom,
+}
+
+impl CellPart {
+    fn range(&self) -> std::ops::Range<usize> {
+        match self {
+            CellPart::Top => (1..4),
+            CellPart::Middle => (4..7),
+            CellPart::Bottom => (7..10),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 enum Cell {
     Solved(u8),
     Candidates([bool; 9]),
+}
+
+impl Cell {
+    fn draw_part(&self, f: &mut std::fmt::Formatter, cell_part: CellPart) -> std::fmt::Result {
+        let bold = Style::new().bold();
+
+        match self {
+            Cell::Solved(num) => {
+                if let CellPart::Middle = cell_part {
+                    write!(f, " {}  ", bold.paint(num.to_string()))?;
+                } else {
+                    write!(f, "    ")?;
+                }
+            }
+            Cell::Candidates(c) => {
+                let candidate_string = cell_part
+                    .range()
+                    .map(|x| {
+                        if !c[x - 1] {
+                            String::from(" ")
+                        } else {
+                            x.to_string()
+                        }
+                    })
+                    .collect::<String>();
+
+                write!(f, "{} ", candidate_string)?
+            }
+        }
+
+        Ok(())
+    }
 }
 
 struct Grid([[Cell; 9]; 9]);
@@ -58,7 +106,6 @@ impl std::fmt::Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Each cell is 4 wide and there are two dividers per line
         let width = 4 * 9 + 2;
-        let bold = Style::new().bold();
 
         for (i, line) in self.0.iter().enumerate() {
             if i % 3 == 0 && i != 0 {
@@ -71,22 +118,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                match digit {
-                    Cell::Solved(_) => write!(f, "    ")?,
-                    Cell::Candidates(c) => {
-                        let candidate_string = (1..4)
-                            .map(|x| {
-                                if !c[x - 1] {
-                                    String::from(" ")
-                                } else {
-                                    x.to_string()
-                                }
-                            })
-                            .collect::<String>();
-
-                        write!(f, "{} ", candidate_string)?
-                    }
-                }
+                digit.draw_part(f, CellPart::Top)?;
             }
 
             writeln!(f, "")?;
@@ -96,22 +128,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                match digit {
-                    Cell::Solved(num) => write!(f, " {}  ", bold.paint(num.to_string()))?,
-                    Cell::Candidates(c) => {
-                        let candidate_string = (4..7)
-                            .map(|x| {
-                                if !c[x - 1] {
-                                    String::from(" ")
-                                } else {
-                                    x.to_string()
-                                }
-                            })
-                            .collect::<String>();
-
-                        write!(f, "{} ", candidate_string)?
-                    }
-                }
+                digit.draw_part(f, CellPart::Middle)?;
             }
 
             writeln!(f, "")?;
@@ -121,22 +138,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                match digit {
-                    Cell::Solved(_) => write!(f, "    ")?,
-                    Cell::Candidates(c) => {
-                        let candidate_string = (7..10)
-                            .map(|x| {
-                                if !c[x - 1] {
-                                    String::from(" ")
-                                } else {
-                                    x.to_string()
-                                }
-                            })
-                            .collect::<String>();
-
-                        write!(f, "{} ", candidate_string)?
-                    }
-                }
+                digit.draw_part(f, CellPart::Bottom)?;
             }
 
             writeln!(f, "")?;
