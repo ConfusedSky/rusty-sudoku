@@ -123,6 +123,14 @@ impl Grid {
                             let index = (digit - 1) as usize;
                             candidates[index] = false;
                         }
+                        // Cross out all candidates of this type in the same box
+                        // Position in box
+                        let x = (i / 3) * 3 + k % 3;
+                        let y = (j / 3) * 3 + k / 3;
+                        if let Cell::Candidates(ref mut candidates) = grid.0[x][y] {
+                            let index = (digit - 1) as usize;
+                            candidates[index] = false;
+                        }
                     }
                 }
             }
