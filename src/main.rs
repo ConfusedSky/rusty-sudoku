@@ -130,7 +130,7 @@ impl Grid {
     pub fn solve(&mut self) {
         println!("{}", self);
 
-        while let Some((i, j, digit)) = self.find_naked_single() {
+        while let Some((i, j, digit)) = self.find_hidden_single().or(self.find_naked_single()) {
             println!("Found naked single for {} at r{}c{}!", digit, i + 1, j + 1);
 
             self.place_digit((i, j), digit);
@@ -153,6 +153,85 @@ impl Grid {
                         return Some((i, j, digit));
                     }
                 }
+            }
+        }
+
+        None
+    }
+
+    fn find_hidden_single(&self) -> Option<(usize, usize, u8)> {
+        fn increment_counts(
+            counts: Vec<(u8, usize)>,
+            candidates: [bool; 9],
+            k: usize,
+        ) -> Vec<(u8, usize)> {
+            candidates
+                .iter()
+                // Map each candidate to one or zero
+                .map(|candidate| if *candidate { 1 } else { 0 })
+                // Zip it with the existing counts
+                .zip(counts.iter())
+                // Map it to a tuple of the total count and the last k value (row column or box item) where there was that candidate
+                .map(|(candidate, (sum, last_value))| {
+                    (
+                        candidate + sum,
+                        if candidate == 1 { k } else { *last_value },
+                    )
+                })
+                .collect()
+        }
+
+        for i in 0..9 {
+            let mut row_counts = vec![(0u8, 0usize); 9];
+            let mut column_counts = vec![(0u8, 0usize); 9];
+            let mut box_counts = vec![(0u8, 0usize); 9];
+
+            for k in 0..9 {
+                // Count all candidates of this type in this row
+                if let Cell::Candidates(candidates) = self.0[i][k] {
+                    row_counts = increment_counts(row_counts, candidates, k);
+                }
+                // Count all candidates of this type in this column
+                if let Cell::Candidates(candidates) = self.0[k][i] {
+                    column_counts = increment_counts(column_counts, candidates, k);
+                }
+                // Count all candidates of this type in the same box
+                // Position in box
+                let x = (i % 3) * 3 + k % 3;
+                let y = (i / 3) * 3 + k / 3;
+                if let Cell::Candidates(candidates) = self.0[x][y] {
+                    box_counts = increment_counts(box_counts, candidates, k);
+                }
+            }
+
+            if let Some((value, v2)) = row_counts
+                .iter()
+                .enumerate()
+                .find(|(_, x)| x.0 == 1)
+                .map(|(x, y)| (x + 1, y.1))
+            {
+                println!(
+                    "Found hidden single for {} in r{} in c{}",
+                    value,
+                    i + 1,
+                    v2 + 1
+                );
+            }
+            if let Some(value) = column_counts
+                .iter()
+                .enumerate()
+                .find(|(_, x)| x.0 == 1)
+                .map(|x| x.0 + 1)
+            {
+                println!("Found hidden single for {} in c{}", value, i + 1);
+            }
+            if let Some(value) = box_counts
+                .iter()
+                .enumerate()
+                .find(|(_, x)| x.0 == 1)
+                .map(|x| x.0 + 1)
+            {
+                println!("Found hidden single for {} in box {}", value, i + 1);
             }
         }
 
