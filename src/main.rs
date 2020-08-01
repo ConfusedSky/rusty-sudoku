@@ -127,6 +127,32 @@ impl Grid {
         return Ok(grid);
     }
 
+    pub fn find_naked_single(&self) -> Option<(usize, usize, u8)> {
+        for i in 0..9 {
+            for j in 0..9 {
+                if let Cell::Candidates(candidates) = self.0[i][j] {
+                    if candidates.iter().filter(|x| **x).count() == 1 {
+                        let digit = candidates
+                            .iter()
+                            .enumerate()
+                            .find(|(_, b)| **b)
+                            .map(|x| x.0 + 1)
+                            .unwrap() as u8;
+                        return Some((i, j, digit));
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn place_digit(&mut self, position: (usize, usize), digit: u8) {
+        let (i, j) = position;
+        self.0[i][j] = Cell::Solved(digit);
+        self.remove_candidates(position, digit);
+    }
+
     fn remove_candidates(&mut self, position: (usize, usize), digit: u8) {
         let (i, j) = position;
         for k in 0..9 {
@@ -205,9 +231,17 @@ fn main() -> std::io::Result<()> {
 
     file.read_to_string(&mut content)?;
 
-    let grid = Grid::parse(content).unwrap();
+    let mut grid = Grid::parse(content).unwrap();
 
     println!("{}", grid);
+
+    while let Some((i, j, digit)) = grid.find_naked_single() {
+        println!("Found naked single for {} at r{}c{}!", digit, i + 1, j + 1);
+
+        grid.place_digit((i, j), digit);
+
+        println!("{}", grid);
+    }
 
     Ok(())
 }
