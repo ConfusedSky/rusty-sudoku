@@ -225,7 +225,11 @@ impl std::fmt::Display for Grid {
 }
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("firstTest.txt")?;
+    let filename = std::env::args()
+        .skip(1)
+        .next()
+        .unwrap_or(String::from("firstTest.txt"));
+    let mut file = File::open(filename)?;
 
     let mut content = String::new();
 
