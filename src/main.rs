@@ -6,6 +6,12 @@ use ansi_term::Style;
 use std::fs::File;
 use std::io::prelude::*;
 
+#[derive(Debug)]
+enum ParseError {
+    BadLength,
+    BadWidth,
+}
+
 enum CellPart {
     Top,
     Middle,
@@ -79,7 +85,7 @@ impl Default for Grid {
 }
 
 impl Grid {
-    fn parse(content: String) -> Result<Grid, ParseError> {
+    pub fn parse(content: String) -> Result<Grid, ParseError> {
         let cleaned = content
             .split("\n")
             .filter(|x| !x.contains("-"))
@@ -109,34 +115,40 @@ impl Grid {
             }
         }
 
+        // Initially remove all candidates for the givens
         for i in 0..9 {
             for j in 0..9 {
                 if let Cell::Solved(digit) = grid.0[i][j] {
-                    for k in 0..9 {
-                        // Cross out all candidates of this type in this row
-                        if let Cell::Candidates(ref mut candidates) = grid.0[i][k] {
-                            let index = (digit - 1) as usize;
-                            candidates[index] = false;
-                        }
-                        // Cross out all candidates of this type in this column
-                        if let Cell::Candidates(ref mut candidates) = grid.0[k][j] {
-                            let index = (digit - 1) as usize;
-                            candidates[index] = false;
-                        }
-                        // Cross out all candidates of this type in the same box
-                        // Position in box
-                        let x = (i / 3) * 3 + k % 3;
-                        let y = (j / 3) * 3 + k / 3;
-                        if let Cell::Candidates(ref mut candidates) = grid.0[x][y] {
-                            let index = (digit - 1) as usize;
-                            candidates[index] = false;
-                        }
-                    }
+                    grid.remove_candidates((i, j), digit);
                 }
             }
         }
 
         return Ok(grid);
+    }
+
+    fn remove_candidates(&mut self, position: (usize, usize), digit: u8) {
+        let (i, j) = position;
+        for k in 0..9 {
+            // Cross out all candidates of this type in this row
+            if let Cell::Candidates(ref mut candidates) = self.0[i][k] {
+                let index = (digit - 1) as usize;
+                candidates[index] = false;
+            }
+            // Cross out all candidates of this type in this column
+            if let Cell::Candidates(ref mut candidates) = self.0[k][j] {
+                let index = (digit - 1) as usize;
+                candidates[index] = false;
+            }
+            // Cross out all candidates of this type in the same box
+            // Position in box
+            let x = (i / 3) * 3 + k % 3;
+            let y = (j / 3) * 3 + k / 3;
+            if let Cell::Candidates(ref mut candidates) = self.0[x][y] {
+                let index = (digit - 1) as usize;
+                candidates[index] = false;
+            }
+        }
     }
 }
 
@@ -184,12 +196,6 @@ impl std::fmt::Display for Grid {
 
         Ok(())
     }
-}
-
-#[derive(Debug)]
-enum ParseError {
-    BadLength,
-    BadWidth,
 }
 
 fn main() -> std::io::Result<()> {
