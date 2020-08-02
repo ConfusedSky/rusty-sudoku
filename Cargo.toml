@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "sudoku_core"
+    "sudoku_core",
+    "app"
 ]
