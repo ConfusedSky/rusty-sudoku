@@ -12,15 +12,12 @@ use sudoku_core::SolutionStep;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-pub struct Steps(Vec<SolutionStep>);
-
-#[wasm_bindgen]
-pub fn get_solution() -> Steps {
+pub fn get_solution() -> JsValue {
     let file = include_str!("../../sudoku_core/firstTest.txt");
 
     let mut grid = Grid::parse(file).unwrap();
 
-    return Steps(grid.solve(|_| {}).collect());
+    return JsValue::from_serde(&grid.solve(|_| {}).collect::<Vec<SolutionStep>>()).unwrap();
 }
 
 // This is like the `main` function, except for JavaScript.

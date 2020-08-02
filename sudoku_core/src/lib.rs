@@ -1,6 +1,8 @@
 #![deny(clippy::all)]
 #![warn(clippy::pedantic, clippy::nursery, unsafe_code)]
 
+use serde::{Deserialize, Serialize};
+
 use ansi_term::Color;
 use ansi_term::Style;
 
@@ -10,6 +12,7 @@ pub enum ParseError {
     BadWidth,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct SolutionStep {
     pub position: (usize, usize),
     pub digit: u8,
