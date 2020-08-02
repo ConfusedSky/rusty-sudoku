@@ -3,11 +3,9 @@
 
 use ansi_term::Color;
 use ansi_term::Style;
-use std::fs::File;
-use std::io::prelude::*;
 
 #[derive(Debug)]
-enum ParseError {
+pub enum ParseError {
     BadLength,
     BadWidth,
 }
@@ -76,7 +74,7 @@ impl Cell {
     }
 }
 
-struct Grid([[Cell; 9]; 9]);
+pub struct Grid([[Cell; 9]; 9]);
 
 impl Default for Grid {
     fn default() -> Self {
@@ -330,21 +328,4 @@ impl std::fmt::Display for Grid {
 
         Ok(())
     }
-}
-
-fn main() -> std::io::Result<()> {
-    let filename = std::env::args()
-        .skip(1)
-        .next()
-        .unwrap_or(String::from("firstTest.txt"));
-    let mut file = File::open(filename)?;
-
-    let mut content = String::new();
-
-    file.read_to_string(&mut content)?;
-
-    let mut grid = Grid::parse(content).unwrap();
-    grid.solve();
-
-    Ok(())
 }
