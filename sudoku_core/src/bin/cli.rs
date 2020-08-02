@@ -16,7 +16,12 @@ fn main() -> std::io::Result<()> {
 
     let mut grid = Grid::parse(content).unwrap();
     grid.settty(atty::is(atty::Stream::Stdout));
-    grid.solve();
+
+    for step in grid.solve(|g| println!("{}", g)) {
+        println!("{}", step.message);
+    }
+
+    println!("{}", grid);
 
     Ok(())
 }

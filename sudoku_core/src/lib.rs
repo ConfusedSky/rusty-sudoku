@@ -11,9 +11,9 @@ pub enum ParseError {
 }
 
 pub struct SolutionStep {
-    position: (usize, usize),
-    digit: u8,
-    message: String,
+    pub position: (usize, usize),
+    pub digit: u8,
+    pub message: String,
 }
 
 enum CellPart {
@@ -152,21 +152,13 @@ impl Grid {
         self.printtty = bool;
     }
 
-    pub fn solve(&mut self) {
-        println!("{}", self);
-
-        while let Some(SolutionStep {
-            position: (i, j),
-            digit,
-            message,
-        }) = self
-            .find_hidden_single()
-            .or_else(|| self.find_naked_single())
-        {
-            println!("{}", message);
-            self.place_digit((i, j), digit);
-
-            println!("{}", self);
+    pub fn solve<F>(&mut self, before_step: F) -> GridIterator<F>
+    where
+        F: Fn(&Self) -> (),
+    {
+        GridIterator {
+            grid: self,
+            before_step,
         }
     }
 
@@ -379,5 +371,35 @@ impl std::fmt::Display for Grid {
         }
 
         Ok(())
+    }
+}
+
+pub struct GridIterator<'s, F>
+where
+    F: Fn(&Grid) -> (),
+{
+    grid: &'s mut Grid,
+    before_step: F,
+}
+
+impl<'s, F> Iterator for GridIterator<'s, F>
+where
+    F: Fn(&Grid) -> (),
+{
+    type Item = SolutionStep;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self
+            .grid
+            .find_hidden_single()
+            .or_else(|| self.grid.find_naked_single());
+
+        if let Some(ref step) = next {
+            let before_step = &mut self.before_step;
+            before_step(self.grid);
+            self.grid.place_digit(step.position, step.digit);
+        }
+
+        next
     }
 }
