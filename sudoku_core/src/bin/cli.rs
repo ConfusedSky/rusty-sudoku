@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 
-use sudoku::Grid;
+use sudoku_core::Grid;
 
 fn main() -> std::io::Result<()> {
     let filename = std::env::args()

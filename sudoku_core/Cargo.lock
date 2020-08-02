@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sudoku_core"
+name = "sudoku"
 version = "0.1.0"
 dependencies = [
  "ansi_term",
