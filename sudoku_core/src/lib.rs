@@ -10,6 +10,12 @@ pub enum ParseError {
     BadWidth,
 }
 
+pub struct SolutionStep {
+    position: (usize, usize),
+    digit: u8,
+    message: String,
+}
+
 enum CellPart {
     Top,
     Middle,
@@ -149,17 +155,22 @@ impl Grid {
     pub fn solve(&mut self) {
         println!("{}", self);
 
-        while let Some((i, j, digit)) = self
+        while let Some(SolutionStep {
+            position: (i, j),
+            digit,
+            message,
+        }) = self
             .find_hidden_single()
             .or_else(|| self.find_naked_single())
         {
+            println!("{}", message);
             self.place_digit((i, j), digit);
 
             println!("{}", self);
         }
     }
 
-    fn find_naked_single(&self) -> Option<(usize, usize, u8)> {
+    fn find_naked_single(&self) -> Option<SolutionStep> {
         for i in 0..9 {
             for j in 0..9 {
                 if let Cell::Candidates(candidates) = self.grid[i][j] {
@@ -171,8 +182,16 @@ impl Grid {
                             .map(|x| x.0 + 1)
                             .unwrap() as u8;
 
-                        println!("Found naked single for {} at r{}c{}!", digit, i + 1, j + 1);
-                        return Some((i, j, digit));
+                        return Some(SolutionStep {
+                            position: (i, j),
+                            digit,
+                            message: format!(
+                                "Found naked single for {} at r{}c{}!",
+                                digit,
+                                i + 1,
+                                j + 1
+                            ),
+                        });
                     }
                 }
             }
@@ -187,7 +206,7 @@ impl Grid {
         (x, y)
     }
 
-    fn find_hidden_single(&self) -> Option<(usize, usize, u8)> {
+    fn find_hidden_single(&self) -> Option<SolutionStep> {
         fn increment_counts(
             counts: Vec<(u8, usize)>,
             candidates: [bool; 9],
@@ -240,35 +259,47 @@ impl Grid {
             }
 
             if let Some((digit, k)) = find_single(row_counts) {
-                println!(
+                let message = format!(
                     "Found hidden single for {} in r{} in c{}",
                     digit,
                     i + 1,
                     k + 1
                 );
-                return Some((i, k, digit as u8));
+                return Some(SolutionStep {
+                    position: (i, k),
+                    digit: digit as u8,
+                    message,
+                });
             }
 
             if let Some((digit, k)) = find_single(column_counts) {
-                println!(
+                let message = format!(
                     "Found hidden single for {} in c{} in r{}",
                     digit,
                     i + 1,
                     k + 1
                 );
-                return Some((k, i, digit as u8));
+                return Some(SolutionStep {
+                    position: (k, i),
+                    digit: digit as u8,
+                    message,
+                });
             }
 
             if let Some((digit, k)) = find_single(box_counts) {
                 let (x, y) = Self::get_coords_in_box(i, k);
-                println!(
+                let message = format!(
                     "Found hidden single for {} in box {} at position r{}c{}",
                     digit,
                     i + 1,
                     x + 1,
                     y + 1
                 );
-                return Some((x, y, digit as u8));
+                return Some(SolutionStep {
+                    position: (x, y),
+                    digit: digit as u8,
+                    message,
+                });
             }
         }
 
