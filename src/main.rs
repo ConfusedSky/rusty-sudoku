@@ -162,6 +162,12 @@ impl Grid {
         None
     }
 
+    fn get_coords_in_box(box_num: usize, index: usize) -> (usize, usize) {
+        let x = (box_num / 3) * 3 + index % 3;
+        let y = (box_num % 3) * 3 + index / 3;
+        (x, y)
+    }
+
     fn find_hidden_single(&self) -> Option<(usize, usize, u8)> {
         fn increment_counts(
             counts: Vec<(u8, usize)>,
@@ -182,12 +188,6 @@ impl Grid {
                     )
                 })
                 .collect()
-        }
-
-        fn get_coords_in_cell(cell: usize, index: usize) -> (usize, usize) {
-            let x = (cell / 3) * 3 + index % 3;
-            let y = (cell % 3) * 3 + index / 3;
-            (x, y)
         }
 
         fn find_single(counts: Vec<(u8, usize)>) -> Option<(usize, usize)> {
@@ -214,7 +214,7 @@ impl Grid {
                 }
                 // Count all candidates of this type in the same box
                 // Position in box
-                let (x, y) = get_coords_in_cell(i, k);
+                let (x, y) = Self::get_coords_in_box(i, k);
                 if let Cell::Candidates(candidates) = self.0[x][y] {
                     box_counts = increment_counts(box_counts, candidates, k);
                 }
@@ -241,7 +241,7 @@ impl Grid {
             }
 
             if let Some((digit, k)) = find_single(box_counts) {
-                let (x, y) = get_coords_in_cell(i, k);
+                let (x, y) = Self::get_coords_in_box(i, k);
                 println!(
                     "Found hidden single for {} in box {} at position r{}c{}",
                     digit,
@@ -262,27 +262,26 @@ impl Grid {
         self.remove_candidates(position, digit);
     }
 
+    fn remove_candidate_from(&mut self, position: (usize, usize), digit: u8) {
+        let (x, y) = position;
+        if let Cell::Candidates(ref mut candidates) = self.0[x][y] {
+            let index = (digit - 1) as usize;
+            candidates[index] = false;
+        }
+    }
+
     fn remove_candidates(&mut self, position: (usize, usize), digit: u8) {
         let (i, j) = position;
         for k in 0..9 {
             // Cross out all candidates of this type in this row
-            if let Cell::Candidates(ref mut candidates) = self.0[i][k] {
-                let index = (digit - 1) as usize;
-                candidates[index] = false;
-            }
+            self.remove_candidate_from((i, k), digit);
             // Cross out all candidates of this type in this column
-            if let Cell::Candidates(ref mut candidates) = self.0[k][j] {
-                let index = (digit - 1) as usize;
-                candidates[index] = false;
-            }
+            self.remove_candidate_from((k, j), digit);
             // Cross out all candidates of this type in the same box
             // Position in box
             let x = (i / 3) * 3 + k % 3;
             let y = (j / 3) * 3 + k / 3;
-            if let Cell::Candidates(ref mut candidates) = self.0[x][y] {
-                let index = (digit - 1) as usize;
-                candidates[index] = false;
-            }
+            self.remove_candidate_from((x, y), digit);
         }
     }
 }
