@@ -15,6 +15,7 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut content)?;
 
     let mut grid = Grid::parse(content).unwrap();
+    grid.settty(atty::is(atty::Stream::Stdout));
     grid.solve();
 
     Ok(())

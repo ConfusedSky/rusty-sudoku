@@ -38,6 +38,7 @@ impl Cell {
         f: &mut std::fmt::Formatter,
         cell_part: CellPart,
         position: (usize, usize),
+        terminal: bool,
     ) -> std::fmt::Result {
         let normal = if (position.0 + position.1) % 2 == 0 {
             Style::new().on(Color::RGB(50, 50, 50))
@@ -46,12 +47,20 @@ impl Cell {
         };
         let bold = normal.bold().fg(Color::Red);
 
+        let mut draw = |text: String, style: Style| -> std::fmt::Result {
+            if terminal {
+                write!(f, "{}", style.paint(text))
+            } else {
+                write!(f, "{}", text)
+            }
+        };
+
         match self {
             Cell::Solved(num) => {
                 if let CellPart::Middle = cell_part {
-                    write!(f, "{}", bold.paint(format!(" {} ", num)))?;
+                    draw(format!(" {} ", num), bold)?;
                 } else {
-                    write!(f, "{}", bold.paint(format!("   ")))?;
+                    draw(format!("   "), bold)?;
                 }
             }
             Cell::Candidates(c) => {
@@ -66,7 +75,7 @@ impl Cell {
                     })
                     .collect::<String>();
 
-                write!(f, "{}", normal.paint(candidate_string))?
+                draw(candidate_string, normal)?;
             }
         }
 
@@ -74,17 +83,25 @@ impl Cell {
     }
 }
 
-pub struct Grid([[Cell; 9]; 9]);
+pub struct Grid {
+    grid: [[Cell; 9]; 9],
+    printtty: bool,
+}
 
 impl Default for Grid {
     fn default() -> Self {
-        Grid([[Cell::Candidates([true; 9]); 9]; 9])
+        Self {
+            grid: [[Cell::Candidates([true; 9]); 9]; 9],
+            printtty: false,
+        }
     }
 }
 
 impl Grid {
-    pub fn parse(content: String) -> Result<Grid, ParseError> {
-        let cleaned = content
+    pub fn parse<S: Into<String>>(content: S) -> Result<Grid, ParseError> {
+        let st = content.into();
+
+        let cleaned = st
             .split("\n")
             .filter(|x| !x.contains("-"))
             .map(|x| x.replace("|", ""))
@@ -108,7 +125,7 @@ impl Grid {
         {
             for (j, digit) in line.enumerate() {
                 if let Some(digit) = digit {
-                    grid.0[i][j] = Cell::Solved(digit);
+                    grid.grid[i][j] = Cell::Solved(digit);
                 }
             }
         }
@@ -116,13 +133,17 @@ impl Grid {
         // Initially remove all candidates for the givens
         for i in 0..9 {
             for j in 0..9 {
-                if let Cell::Solved(digit) = grid.0[i][j] {
+                if let Cell::Solved(digit) = grid.grid[i][j] {
                     grid.remove_candidates((i, j), digit);
                 }
             }
         }
 
         return Ok(grid);
+    }
+
+    pub fn settty(&mut self, bool: bool) {
+        self.printtty = bool;
     }
 
     pub fn solve(&mut self) {
@@ -141,7 +162,7 @@ impl Grid {
     fn find_naked_single(&self) -> Option<(usize, usize, u8)> {
         for i in 0..9 {
             for j in 0..9 {
-                if let Cell::Candidates(candidates) = self.0[i][j] {
+                if let Cell::Candidates(candidates) = self.grid[i][j] {
                     if candidates.iter().filter(|x| **x).count() == 1 {
                         let digit = candidates
                             .iter()
@@ -203,17 +224,17 @@ impl Grid {
 
             for k in 0..9 {
                 // Count all candidates of this type in this row
-                if let Cell::Candidates(candidates) = self.0[i][k] {
+                if let Cell::Candidates(candidates) = self.grid[i][k] {
                     row_counts = increment_counts(row_counts, candidates, k);
                 }
                 // Count all candidates of this type in this column
-                if let Cell::Candidates(candidates) = self.0[k][i] {
+                if let Cell::Candidates(candidates) = self.grid[k][i] {
                     column_counts = increment_counts(column_counts, candidates, k);
                 }
                 // Count all candidates of this type in the same box
                 // Position in box
                 let (x, y) = Self::get_coords_in_box(i, k);
-                if let Cell::Candidates(candidates) = self.0[x][y] {
+                if let Cell::Candidates(candidates) = self.grid[x][y] {
                     box_counts = increment_counts(box_counts, candidates, k);
                 }
             }
@@ -256,13 +277,13 @@ impl Grid {
 
     pub fn place_digit(&mut self, position: (usize, usize), digit: u8) {
         let (i, j) = position;
-        self.0[i][j] = Cell::Solved(digit);
+        self.grid[i][j] = Cell::Solved(digit);
         self.remove_candidates(position, digit);
     }
 
     fn remove_candidate_from(&mut self, position: (usize, usize), digit: u8) {
         let (x, y) = position;
-        if let Cell::Candidates(ref mut candidates) = self.0[x][y] {
+        if let Cell::Candidates(ref mut candidates) = self.grid[x][y] {
             let index = (digit - 1) as usize;
             candidates[index] = false;
         }
@@ -289,7 +310,7 @@ impl std::fmt::Display for Grid {
         // Each cell is 4 wide and there are two dividers per line
         let width = 3 * 9 + 2;
 
-        for (i, line) in self.0.iter().enumerate() {
+        for (i, line) in self.grid.iter().enumerate() {
             if i % 3 == 0 && i != 0 {
                 let dashes = (0..width).map(|_| "-").collect::<String>();
                 writeln!(f, "{}", dashes)?;
@@ -300,7 +321,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Top, (i, j))?;
+                digit.draw_part(f, CellPart::Top, (i, j), self.printtty)?;
             }
 
             writeln!(f, "")?;
@@ -310,7 +331,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Middle, (i, j))?;
+                digit.draw_part(f, CellPart::Middle, (i, j), self.printtty)?;
             }
 
             writeln!(f, "")?;
@@ -320,7 +341,7 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Bottom, (i, j))?;
+                digit.draw_part(f, CellPart::Bottom, (i, j), self.printtty)?;
             }
 
             writeln!(f, "")?;
