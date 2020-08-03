@@ -2,9 +2,35 @@ import React from "react";
 import "./Grid.css";
 
 function Cell(props) {
+  const [x, y] = props.position;
+
+  const leftBorder = x === 0;
+  const rightBorder = x % 3 === 2;
+
+  const topBorder = y === 0;
+  const bottomBorder = y % 3 === 2;
+
+  let borderClass = "Grid-cell-border";
+
+  if (leftBorder) {
+    borderClass += " Grid-thick-border-L";
+  }
+
+  if (rightBorder) {
+    borderClass += " Grid-thick-border-R";
+  }
+
+  if (topBorder) {
+    borderClass += " Grid-thick-border-T";
+  }
+
+  if (bottomBorder) {
+    borderClass += " Grid-thick-border-B";
+  }
+
   return (
     <div className="Grid-cell-container">
-      <div className="Grid-cell-border"></div>
+      <div className={borderClass}></div>
       <div className="Grid-cell-inner">
         <div className="Grid-cell-value">{props.value || <>&nbsp;</>}</div>
       </div>
@@ -13,12 +39,14 @@ function Cell(props) {
 }
 
 function Grid(props) {
-  const cells = (v) =>
-    v.map((value, index) => <Cell key={index} value={value}></Cell>);
+  const cells = (v, y) =>
+    v.map((value, index) => (
+      <Cell position={[index, y]} key={index} value={value}></Cell>
+    ));
 
   const rows = props.values.map((value, index) => (
     <div className="Grid-row" key={index}>
-      {cells(value)}
+      {cells(value, index)}
     </div>
   ));
 

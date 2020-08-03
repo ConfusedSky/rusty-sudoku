@@ -259,7 +259,7 @@ impl Grid {
 
             if let Some((digit, k)) = find_single(row_counts) {
                 let message = format!(
-                    "Found hidden single for {} in r{} in c{}",
+                    "Found hidden single for {} in r{} at c{}",
                     digit,
                     i + 1,
                     k + 1
@@ -273,7 +273,7 @@ impl Grid {
 
             if let Some((digit, k)) = find_single(column_counts) {
                 let message = format!(
-                    "Found hidden single for {} in c{} in r{}",
+                    "Found hidden single for {} in c{} at r{}",
                     digit,
                     i + 1,
                     k + 1
