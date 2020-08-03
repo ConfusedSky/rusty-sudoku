@@ -257,6 +257,22 @@ impl Grid {
                 }
             }
 
+            if let Some((digit, k)) = find_single(box_counts) {
+                let (x, y) = Self::get_coords_in_box(i, k);
+                let message = format!(
+                    "Found hidden single for {} in box {} at position r{}c{}",
+                    digit,
+                    i + 1,
+                    x + 1,
+                    y + 1
+                );
+                return Some(SolutionStep {
+                    position: (x, y),
+                    digit: digit as u8,
+                    message,
+                });
+            }
+
             if let Some((digit, k)) = find_single(row_counts) {
                 let message = format!(
                     "Found hidden single for {} in r{} at c{}",
@@ -280,22 +296,6 @@ impl Grid {
                 );
                 return Some(SolutionStep {
                     position: (k, i),
-                    digit: digit as u8,
-                    message,
-                });
-            }
-
-            if let Some((digit, k)) = find_single(box_counts) {
-                let (x, y) = Self::get_coords_in_box(i, k);
-                let message = format!(
-                    "Found hidden single for {} in box {} at position r{}c{}",
-                    digit,
-                    i + 1,
-                    x + 1,
-                    y + 1
-                );
-                return Some(SolutionStep {
-                    position: (x, y),
                     digit: digit as u8,
                     message,
                 });
