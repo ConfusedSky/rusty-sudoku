@@ -2,7 +2,7 @@ import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Steps from "./Steps";
-import { get_solution } from "../pkg/index";
+import { get_solution, get_grid } from "../pkg/index";
 import Grid from "./Grid";
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
         <h1 className="App-header-item">Sudoku Solver</h1>
       </header>
       <div className="App-rest">
-        <Grid></Grid>
+        <Grid values={get_grid()}></Grid>
         <Steps solution={get_solution()}>
           <div></div>
         </Steps>
