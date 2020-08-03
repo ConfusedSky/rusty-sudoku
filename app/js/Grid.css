@@ -1,0 +1,29 @@
+.Grid {
+  height: 80vh;
+  width: 50vw;
+  display: inline-block;
+  border-radius: 10px;
+  border: 3px solid #93a1a1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.Grid-row {
+  height: 11.1%;
+}
+
+.Grid-cell-container {
+  width: 11.1%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Grid-cell {
+  background-color: #eee8d5;
+  width: 80%;
+  height: 80%;
+  text-align: center;
+  border-radius: 5px;
+}

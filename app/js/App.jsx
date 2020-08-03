@@ -3,6 +3,7 @@ import logo from "./logo.svg";
 import "./App.css";
 import Steps from "./Steps";
 import { get_solution } from "../pkg/index";
+import Grid from "./Grid";
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <h1 className="App-header-item">Sudoku Solver</h1>
       </header>
       <div className="App-rest">
-        <div></div>
+        <Grid></Grid>
         <Steps solution={get_solution()}>
           <div></div>
         </Steps>

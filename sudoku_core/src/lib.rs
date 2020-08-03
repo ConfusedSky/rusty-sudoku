@@ -36,7 +36,7 @@ impl CellPart {
 }
 
 #[derive(Clone, Copy)]
-enum Cell {
+pub enum Cell {
     Solved(u8),
     Candidates([bool; 9]),
 }
@@ -153,6 +153,10 @@ impl Grid {
 
     pub fn settty(&mut self, bool: bool) {
         self.printtty = bool;
+    }
+
+    pub fn get_grid(&self) -> &[[Cell; 9]; 9] {
+        &self.grid
     }
 
     pub fn solve<F>(&mut self, before_step: F) -> GridIterator<F>

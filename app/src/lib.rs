@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 
+use sudoku_core::Cell;
 use sudoku_core::Grid;
 use sudoku_core::SolutionStep;
 
@@ -10,6 +11,31 @@ use sudoku_core::SolutionStep;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+#[wasm_bindgen]
+pub fn get_grid() -> JsValue {
+    let file = include_str!("../../sudoku_core/firstTest.txt");
+
+    let grid = Grid::parse(file).unwrap();
+
+    let res = grid
+        .get_grid()
+        .iter()
+        .map(|r| {
+            r.iter()
+                .map(|c| {
+                    if let Cell::Solved(digit) = c {
+                        Some(*digit)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<Option<u8>>>()
+        })
+        .collect::<Vec<Vec<Option<u8>>>>();
+
+    return JsValue::from_serde(&res).unwrap();
+}
 
 #[wasm_bindgen]
 pub fn get_solution() -> JsValue {
