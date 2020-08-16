@@ -6,7 +6,18 @@ import { get_grid as getGrid, get_solution as getSolution } from "../pkg/index";
 import Grid from "./Grid";
 
 class App extends React.PureComponent {
+  constructor() {
+    super();
+
+    this.state = {
+      grid: getGrid(),
+      solution: getSolution(),
+    };
+  }
+
   render() {
+    const { grid, solution } = this.state;
+
     return (
       <div className="App">
         <header className="App-header">
@@ -16,8 +27,8 @@ class App extends React.PureComponent {
           <h1 className="App-header-item">Sudoku Solver</h1>
         </header>
         <div className="App-rest">
-          <Grid values={getGrid()} />
-          <Steps solution={getSolution()} />
+          <Grid values={grid} />
+          <Steps solution={solution} />
         </div>
       </div>
     );
