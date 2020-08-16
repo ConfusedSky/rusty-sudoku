@@ -171,7 +171,7 @@ impl Grid {
 
     pub fn solve<F>(&mut self, before_step: F) -> GridIterator<F>
     where
-        F: Fn(&Self)
+        F: FnMut(&Self)
     {
         GridIterator {
             grid: self,
@@ -412,7 +412,7 @@ impl std::fmt::Display for Grid {
 
 pub struct GridIterator<'s, F>
 where
-    F: Fn(&Grid),
+    F: FnMut(&Grid),
 {
     grid: &'s mut Grid,
     before_step: F,
@@ -420,7 +420,7 @@ where
 
 impl<'s, F> Iterator for GridIterator<'s, F>
 where
-    F: Fn(&Grid),
+    F: FnMut(&Grid),
 {
     type Item = SolutionStep;
 

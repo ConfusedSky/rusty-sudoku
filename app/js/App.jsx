@@ -2,7 +2,7 @@ import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Steps from "./Steps";
-import { get_grid as getGrid, get_solution as getSolution, default_context as defaultContext } from "../pkg/index";
+import { get_solution as getSolution, default_context as defaultContext } from "../pkg/index";
 import Grid from "./Grid";
 
 class App extends React.PureComponent {
@@ -12,7 +12,7 @@ class App extends React.PureComponent {
     const context = defaultContext();
 
     this.state = {
-      grid: getGrid(context),
+      grid: 0,
       solution: getSolution(context),
     };
   }
@@ -29,8 +29,8 @@ class App extends React.PureComponent {
           <h1 className="App-header-item">Sudoku Solver</h1>
         </header>
         <div className="App-rest">
-          <Grid values={grid} />
-          <Steps solution={solution} />
+          <Grid values={solution.grids[grid]} />
+          <Steps solution={solution.steps} />
         </div>
       </div>
     );

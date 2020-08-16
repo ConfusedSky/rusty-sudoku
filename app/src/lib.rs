@@ -1,6 +1,8 @@
 #![deny(clippy::all)]
 #![warn(clippy::pedantic, clippy::nursery, unsafe_code)]
 
+use serde::{Deserialize, Serialize};
+
 use wasm_bindgen::prelude::*;
 
 use sudoku_core::Cell;
@@ -20,6 +22,14 @@ pub struct Context {
     grid: Grid,
 }
 
+pub type OptionalGrid = Vec<Vec<Option<u8>>>;
+
+#[derive(Serialize, Deserialize)]
+pub struct Solution {
+    steps: Vec<SolutionStep>,
+    grids: Vec<OptionalGrid>,
+}
+
 #[wasm_bindgen]
 #[must_use]
 pub fn default_context() -> Context {
@@ -28,11 +38,8 @@ pub fn default_context() -> Context {
     Context { grid: Grid::parse(file).unwrap() }
 }
 
-#[wasm_bindgen]
-#[must_use]
-pub fn get_grid(con: &Context) -> JsValue {
-    let grid = &con.grid;
-    let res = grid
+fn grid_to_optional(grid: &Grid) -> OptionalGrid {
+    grid
         .get_grid()
         .iter()
         .map(|r| {
@@ -46,17 +53,27 @@ pub fn get_grid(con: &Context) -> JsValue {
                 })
                 .collect::<Vec<Option<u8>>>()
         })
-        .collect::<Vec<Vec<Option<u8>>>>();
-
-    JsValue::from_serde(&res).unwrap()
+        .collect()
 }
 
 #[wasm_bindgen]
 #[must_use]
 pub fn get_solution(con: &mut Context) -> JsValue {
-    let grid = &mut con.grid;
+    let mut grids: Vec<OptionalGrid> = Vec::new();
 
-    JsValue::from_serde(&grid.solve(|_| {}).collect::<Vec<SolutionStep>>()).unwrap()
+    grids.push(grid_to_optional(&con.grid));
+
+    let steps = con.grid.solve(|grid| {
+        let converted = grid_to_optional(grid);
+        grids.push(converted);
+    }).collect::<Vec<SolutionStep>>();
+
+    let solution = Solution {
+        steps,
+        grids
+    };
+
+    JsValue::from_serde(&solution).unwrap()
 }
 
 // This is like the `main` function, except for JavaScript.
