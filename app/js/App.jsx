@@ -2,7 +2,7 @@ import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Steps from "./Steps";
-import { get_solution as getSolution, get_grid as getGrid } from "../pkg/index";
+import { get_grid as getGrid, get_solution as getSolution } from "../pkg/index";
 import Grid from "./Grid";
 
 class App extends React.PureComponent {
