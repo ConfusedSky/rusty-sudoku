@@ -1,5 +1,5 @@
 #![deny(clippy::all)]
-#![warn(clippy::pedantic, clippy::nursery, unsafe_code)]
+#![warn(clippy::nursery, unsafe_code)]
 
 use serde::{Deserialize, Serialize};
 
@@ -28,9 +28,9 @@ enum CellPart {
 impl CellPart {
     fn range(&self) -> std::ops::Range<usize> {
         match self {
-            CellPart::Top => (1..4),
-            CellPart::Middle => (4..7),
-            CellPart::Bottom => (7..10),
+            Self::Top => (1..4),
+            Self::Middle => (4..7),
+            Self::Bottom => (7..10),
         }
     }
 }
@@ -45,7 +45,7 @@ impl Cell {
     fn draw_part(
         &self,
         f: &mut std::fmt::Formatter,
-        cell_part: CellPart,
+        cell_part: &CellPart,
         position: (usize, usize),
         terminal: bool,
     ) -> std::fmt::Result {
@@ -65,21 +65,21 @@ impl Cell {
         };
 
         match self {
-            Cell::Solved(num) => {
+            Self::Solved(num) => {
                 if let CellPart::Middle = cell_part {
                     draw(format!(" {} ", num), bold)?;
                 } else {
-                    draw(format!("   "), bold)?;
+                    draw("   ".to_string(), bold)?;
                 }
             }
-            Cell::Candidates(c) => {
+            Self::Candidates(c) => {
                 let candidate_string = cell_part
                     .range()
                     .map(|x| {
-                        if !c[x - 1] {
-                            String::from(" ")
-                        } else {
+                        if c[x - 1] {
                             x.to_string()
+                        } else {
+                            String::from(" ")
                         }
                     })
                     .collect::<String>();
@@ -107,12 +107,15 @@ impl Default for Grid {
 }
 
 impl Grid {
-    pub fn parse<S: Into<String>>(content: S) -> Result<Grid, ParseError> {
+    /// # Errors
+    /// Will return an error if the input doesn't have the correct number
+    /// of rows of columns
+    pub fn parse<S: Into<String>>(content: S) -> Result<Self, ParseError> {
         let st = content.into();
 
         let cleaned = st
-            .split("\n")
-            .filter(|x| !x.contains("-"))
+            .split('\n')
+            .filter(|x| !x.contains('-'))
             .map(|x| x.replace("|", ""))
             .collect::<Vec<String>>();
 
@@ -125,7 +128,7 @@ impl Grid {
             return Err(ParseError::BadWidth);
         }
 
-        let mut grid: Grid = Default::default();
+        let mut grid = Self::default();
 
         for (i, line) in cleaned
             .iter()
@@ -148,20 +151,21 @@ impl Grid {
             }
         }
 
-        return Ok(grid);
+        Ok(grid)
     }
 
     pub fn settty(&mut self, bool: bool) {
         self.printtty = bool;
     }
 
-    pub fn get_grid(&self) -> &[[Cell; 9]; 9] {
+    #[allow(clippy::must_use_candidate)]
+    pub const fn get_grid(&self) -> &[[Cell; 9]; 9] {
         &self.grid
     }
 
     pub fn solve<F>(&mut self, before_step: F) -> GridIterator<F>
     where
-        F: Fn(&Self) -> (),
+        F: Fn(&Self)
     {
         GridIterator {
             grid: self,
@@ -199,7 +203,7 @@ impl Grid {
         None
     }
 
-    fn get_coords_in_box(box_num: usize, index: usize) -> (usize, usize) {
+    const fn get_coords_in_box(box_num: usize, index: usize) -> (usize, usize) {
         let x = (box_num / 3) * 3 + index % 3;
         let y = (box_num % 3) * 3 + index / 3;
         (x, y)
@@ -207,7 +211,7 @@ impl Grid {
 
     fn find_hidden_single(&self) -> Option<SolutionStep> {
         fn increment_counts(
-            counts: Vec<(u8, usize)>,
+            counts: &[(u8, usize)],
             candidates: [bool; 9],
             k: usize,
         ) -> Vec<(u8, usize)> {
@@ -227,7 +231,7 @@ impl Grid {
                 .collect()
         }
 
-        fn find_single(counts: Vec<(u8, usize)>) -> Option<(usize, usize)> {
+        fn find_single(counts: &[(u8, usize)]) -> Option<(usize, usize)> {
             counts
                 .iter()
                 .enumerate()
@@ -236,28 +240,28 @@ impl Grid {
         }
 
         for i in 0..9 {
-            let mut row_counts = vec![(0u8, 0usize); 9];
-            let mut column_counts = vec![(0u8, 0usize); 9];
-            let mut box_counts = vec![(0u8, 0usize); 9];
+            let mut row_counts = vec![(0_u8, 0_usize); 9];
+            let mut column_counts = vec![(0_u8, 0_usize); 9];
+            let mut box_counts = vec![(0_u8, 0_usize); 9];
 
             for k in 0..9 {
                 // Count all candidates of this type in this row
                 if let Cell::Candidates(candidates) = self.grid[i][k] {
-                    row_counts = increment_counts(row_counts, candidates, k);
+                    row_counts = increment_counts(&row_counts, candidates, k);
                 }
                 // Count all candidates of this type in this column
                 if let Cell::Candidates(candidates) = self.grid[k][i] {
-                    column_counts = increment_counts(column_counts, candidates, k);
+                    column_counts = increment_counts(&column_counts, candidates, k);
                 }
                 // Count all candidates of this type in the same box
                 // Position in box
                 let (x, y) = Self::get_coords_in_box(i, k);
                 if let Cell::Candidates(candidates) = self.grid[x][y] {
-                    box_counts = increment_counts(box_counts, candidates, k);
+                    box_counts = increment_counts(&box_counts, candidates, k);
                 }
             }
 
-            if let Some((digit, k)) = find_single(box_counts) {
+            if let Some((digit, k)) = find_single(&box_counts) {
                 let (x, y) = Self::get_coords_in_box(i, k);
                 let message = format!(
                     "Found hidden single for {} in box {} at position r{}c{}",
@@ -273,7 +277,7 @@ impl Grid {
                 });
             }
 
-            if let Some((digit, k)) = find_single(row_counts) {
+            if let Some((digit, k)) = find_single(&row_counts) {
                 let message = format!(
                     "Found hidden single for {} in r{} at c{}",
                     digit,
@@ -287,7 +291,7 @@ impl Grid {
                 });
             }
 
-            if let Some((digit, k)) = find_single(column_counts) {
+            if let Some((digit, k)) = find_single(&column_counts) {
                 let message = format!(
                     "Found hidden single for {} in c{} at r{}",
                     digit,
@@ -351,30 +355,30 @@ impl std::fmt::Display for Grid {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Top, (i, j), self.printtty)?;
+                digit.draw_part(f, &CellPart::Top, (i, j), self.printtty)?;
             }
 
-            writeln!(f, "")?;
+            writeln!(f)?;
 
             for (j, digit) in line.iter().enumerate() {
                 if j % 3 == 0 && j != 0 {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Middle, (i, j), self.printtty)?;
+                digit.draw_part(f, &CellPart::Middle, (i, j), self.printtty)?;
             }
 
-            writeln!(f, "")?;
+            writeln!(f)?;
 
             for (j, digit) in line.iter().enumerate() {
                 if j % 3 == 0 && j != 0 {
                     write!(f, "|")?;
                 }
 
-                digit.draw_part(f, CellPart::Bottom, (i, j), self.printtty)?;
+                digit.draw_part(f, &CellPart::Bottom, (i, j), self.printtty)?;
             }
 
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
 
         Ok(())
@@ -383,7 +387,7 @@ impl std::fmt::Display for Grid {
 
 pub struct GridIterator<'s, F>
 where
-    F: Fn(&Grid) -> (),
+    F: Fn(&Grid),
 {
     grid: &'s mut Grid,
     before_step: F,
@@ -391,7 +395,7 @@ where
 
 impl<'s, F> Iterator for GridIterator<'s, F>
 where
-    F: Fn(&Grid) -> (),
+    F: Fn(&Grid),
 {
     type Item = SolutionStep;
 
