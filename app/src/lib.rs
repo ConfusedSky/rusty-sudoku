@@ -16,12 +16,22 @@ use sudoku_core::SolutionStep;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
+pub struct Context {
+    grid: Grid,
+}
+
+#[wasm_bindgen]
 #[must_use]
-pub fn get_grid() -> JsValue {
+pub fn default_context() -> Context {
     let file = include_str!("../../sudoku_core/firstTest.txt");
 
-    let grid = Grid::parse(file).unwrap();
+    Context { grid: Grid::parse(file).unwrap() }
+}
 
+#[wasm_bindgen]
+#[must_use]
+pub fn get_grid(con: &Context) -> JsValue {
+    let grid = &con.grid;
     let res = grid
         .get_grid()
         .iter()
@@ -43,10 +53,8 @@ pub fn get_grid() -> JsValue {
 
 #[wasm_bindgen]
 #[must_use]
-pub fn get_solution() -> JsValue {
-    let file = include_str!("../../sudoku_core/firstTest.txt");
-
-    let mut grid = Grid::parse(file).unwrap();
+pub fn get_solution(con: &mut Context) -> JsValue {
+    let grid = &mut con.grid;
 
     JsValue::from_serde(&grid.solve(|_| {}).collect::<Vec<SolutionStep>>()).unwrap()
 }
