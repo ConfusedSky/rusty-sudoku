@@ -1,5 +1,5 @@
 #![deny(clippy::all)]
-#![warn(clippy::nursery, unsafe_code)]
+#![warn(clippy::pedantic, clippy::nursery, unsafe_code)]
 
 use serde::{Deserialize, Serialize};
 
@@ -115,8 +115,13 @@ impl Grid {
 
         let cleaned = st
             .split('\n')
-            .filter(|x| !x.contains('-'))
-            .map(|x| x.replace("|", ""))
+            .filter_map(|x| {
+                if x.contains('-') {
+                    None
+                } else {
+                    Some(x.replace("|", ""))
+                }
+            })
             .collect::<Vec<String>>();
 
         // Make sure we got a 9x9 grid
@@ -130,6 +135,7 @@ impl Grid {
 
         let mut grid = Self::default();
 
+        #[allow(clippy::cast_possible_truncation)]
         for (i, line) in cleaned
             .iter()
             .map(|x| x.chars().map(|x| x.to_digit(10).map(|x| x as u8)))
@@ -177,12 +183,21 @@ impl Grid {
         for i in 0..9 {
             for j in 0..9 {
                 if let Cell::Candidates(candidates) = self.grid[i][j] {
+                    // TODO: Come back here
                     if candidates.iter().filter(|x| **x).count() == 1 {
+                        // Find the digit that has at least one canditate
+                        // or return nothing
+                        #[allow(clippy::cast_possible_truncation)]
                         let digit = candidates
                             .iter()
                             .enumerate()
-                            .find(|(_, b)| **b)
-                            .map(|x| x.0 + 1)
+                            .find_map(|(x, b)| {
+                                if *b {
+                                    Some(x + 1)
+                                } else {
+                                    None
+                                }
+                            })
                             .unwrap() as u8;
 
                         return Some(SolutionStep {
@@ -235,8 +250,13 @@ impl Grid {
             counts
                 .iter()
                 .enumerate()
-                .find(|(_, (count, _))| *count == 1)
-                .map(|(digit, (_, k))| (digit + 1, *k))
+                .find_map(|(digit, (count, k))| {
+                    if *count == 1 {
+                        Some((digit + 1, *k))
+                    } else {
+                        None
+                    }
+                })
         }
 
         for i in 0..9 {
@@ -270,6 +290,8 @@ impl Grid {
                     x + 1,
                     y + 1
                 );
+
+                #[allow(clippy::cast_possible_truncation)]
                 return Some(SolutionStep {
                     position: (x, y),
                     digit: digit as u8,
@@ -284,6 +306,8 @@ impl Grid {
                     i + 1,
                     k + 1
                 );
+
+                #[allow(clippy::cast_possible_truncation)]
                 return Some(SolutionStep {
                     position: (i, k),
                     digit: digit as u8,
@@ -298,6 +322,8 @@ impl Grid {
                     i + 1,
                     k + 1
                 );
+
+                #[allow(clippy::cast_possible_truncation)]
                 return Some(SolutionStep {
                     position: (k, i),
                     digit: digit as u8,

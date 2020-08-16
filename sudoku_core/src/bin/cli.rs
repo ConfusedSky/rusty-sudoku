@@ -4,8 +4,8 @@ use std::io::prelude::*;
 use sudoku_core::Grid;
 
 fn before_step(g: &Grid) {
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+    // std::thread::sleep(std::time::Duration::from_millis(100));
+    // print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
 
     println!("{}", g);
 }
