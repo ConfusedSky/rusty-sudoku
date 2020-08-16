@@ -6,7 +6,7 @@
     "build": "rimraf dist pkg && node scripts/build.js",
     "start": "rimraf dist pkg && node scripts/start.js",
     "test": "cargo test && wasm-pack test --headless && node scripts/test.js",
-    "lint": "eslint js"
+    "lint": "eslint js --ext jsx"
   },
   "dependencies": {
     "@babel/core": "7.9.0",

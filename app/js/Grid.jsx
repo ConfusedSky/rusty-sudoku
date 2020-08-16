@@ -30,7 +30,7 @@ function Cell(props) {
 
   return (
     <div className="Grid-cell-container">
-      <div className={borderClass}></div>
+      <div className={borderClass} />
       <div className="Grid-cell-inner">
         <div className="Grid-cell-value">{props.value || <>&nbsp;</>}</div>
       </div>
@@ -39,10 +39,9 @@ function Cell(props) {
 }
 
 function Grid(props) {
-  const cells = (v, y) =>
-    v.map((value, index) => (
-      <Cell position={[index, y]} key={index} value={value}></Cell>
-    ));
+  const cells = (v, y) => v.map((value, index) => (
+    <Cell position={[index, y]} key={index} value={value} />
+  ));
 
   const rows = props.values.map((value, index) => (
     <div className="Grid-row" key={index}>
