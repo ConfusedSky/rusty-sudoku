@@ -1,3 +1,6 @@
+#![deny(clippy::all)]
+#![warn(clippy::pedantic, clippy::nursery, unsafe_code)]
+
 use wasm_bindgen::prelude::*;
 
 use sudoku_core::Cell;
@@ -13,6 +16,7 @@ use sudoku_core::SolutionStep;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
+#[must_use]
 pub fn get_grid() -> JsValue {
     let file = include_str!("../../sudoku_core/firstTest.txt");
 
@@ -34,19 +38,22 @@ pub fn get_grid() -> JsValue {
         })
         .collect::<Vec<Vec<Option<u8>>>>();
 
-    return JsValue::from_serde(&res).unwrap();
+    JsValue::from_serde(&res).unwrap()
 }
 
 #[wasm_bindgen]
+#[must_use]
 pub fn get_solution() -> JsValue {
     let file = include_str!("../../sudoku_core/firstTest.txt");
 
     let mut grid = Grid::parse(file).unwrap();
 
-    return JsValue::from_serde(&grid.solve(|_| {}).collect::<Vec<SolutionStep>>()).unwrap();
+    JsValue::from_serde(&grid.solve(|_| {}).collect::<Vec<SolutionStep>>()).unwrap()
 }
 
 // This is like the `main` function, except for JavaScript.
+/// # Errors
+/// Doesn't actually ever throw errors
 #[wasm_bindgen(start)]
 pub fn main_js() -> Result<(), JsValue> {
     // This provides better error messages in debug mode.

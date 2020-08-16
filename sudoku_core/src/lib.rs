@@ -164,7 +164,7 @@ impl Grid {
         self.printtty = bool;
     }
 
-    #[allow(clippy::must_use_candidate)]
+    #[must_use]
     pub const fn get_grid(&self) -> &[[Cell; 9]; 9] {
         &self.grid
     }
@@ -183,7 +183,6 @@ impl Grid {
         for i in 0..9 {
             for j in 0..9 {
                 if let Cell::Candidates(candidates) = self.grid[i][j] {
-                    // TODO: Come back here
                     if candidates.iter().filter(|x| **x).count() == 1 {
                         // Find the digit that has at least one canditate
                         // or return nothing
