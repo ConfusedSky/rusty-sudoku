@@ -61,12 +61,17 @@ fn grid_to_optional(grid: &Grid) -> OptionalGrid {
 pub fn get_solution(con: &mut Context) -> JsValue {
     let mut grids: Vec<OptionalGrid> = Vec::new();
 
-    grids.push(grid_to_optional(&con.grid));
-
-    let steps = con.grid.solve(|grid| {
+    let mut steps = con.grid.solve(|grid| {
         let converted = grid_to_optional(grid);
         grids.push(converted);
     }).collect::<Vec<SolutionStep>>();
+
+    steps.insert(0, SolutionStep {
+        digit: 0,
+        position: (0, 0),
+        message: "Initial Position".to_string()
+    });
+    grids.push(grid_to_optional(&con.grid));
 
     let solution = Solution {
         steps,
